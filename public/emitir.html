@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Emitir</title>
+    <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <video style="width: 680px;height: 320px;" src="" id="video" autoplay="true"></video>
+    <canvas style="display: none;" id="preview"></canvas>
+    <div id="logger"></div>
+    <script>
+        var canvas = document.getElementById("preview");
+        var context = canvas.getContext("2d");
+        canvas.width = 800;
+        canvas.height = 600;
+        context.width = canvas.width;
+        context.height = canvas.height;
+        var video = document.getElementById("video");
+        var socket = io();
+
+        function logger(msg) {
+            $("#logger").text(msg);
+        }
+
+        function loadFail() {
+            logger("Camara no conectado ");
+        }
+
+        function loadCam(stream) {
+            logger("Camara cargada correctamente");
+            video.src = URL.createObjectURL(stream);
+        }
+        //muestra en canvas
+        function viewVideo(video, content) {
+            context.drawImage(video, 0, 0, canvas.width,canvas.height)
+            socket.emit('stream',canvas.toDataURL('image/webp'));
+        }
+        $(function () {
+            
+            navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia ||
+                navigator.mozGetUserMedia || navigator.msGetUserMedia);
+            if (navigator.getUserMedia) { //si tenemos acceso a la camara
+                navigator.getUserMedia({
+                    video: true
+                }, loadCam, loadFail);
+            }
+            //1000 =1seg
+            setInterval(function () {
+                viewVideo(video, context);
+            },5000);//70fps
+
+        });
+    </script>
+
+</body>
+
+</html>

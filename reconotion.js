@@ -5,12 +5,12 @@ const recognizer = fr.FaceRecognizer();
 const path = require('path');
 const {
     drawRects,
-    getDataPath
+    getAppdataPath
   } = require('./commons');
 //carga el modelo
-//const dataPath = path.resolve(__dirname, './models');
+const dataPath = path.resolve(__dirname, './models');
 const trainedModelFile = `model.json`;
-const trainedModelFilePath = path.resolve(getDataPath(), trainedModelFile);
+const trainedModelFilePath = path.resolve(dataPath, trainedModelFile);
 recognizer.load(require(trainedModelFilePath));
 
 //imagen para reconocer
@@ -37,6 +37,4 @@ const faces = detector.getFacesFromLocations(testFoto, faceRects, 150);
     console.log(rect);
     console.log(prediction);
   });
-  //fr.saveImage("res.jpg",win.);
-fr.hitEnterToContinue();
-
+ 
