@@ -7,7 +7,9 @@ var Log = require("log"),
     log = new Log('debug');
 const fs = require('fs');
 /*INIT config face */
-const fr = require('face-recognition');
+const cv = require('opencv4nodejs')
+//const fr = require('face-recognition');
+const fr = require('face-recognition').withCv(cv);
 const detector = fr.FaceDetector();
 const win = new fr.ImageWindow();
 const recognizer = fr.FaceRecognizer();
@@ -15,8 +17,9 @@ const path = require('path');
 const {
     drawRects,
     getDataPath,
-    decodeFromBase64
-  } = require('./commons');
+    decodeFromBase64,
+    loadBase64
+} = require('./commons');
 //carga el modelo
 //const dataPath = path.resolve(__dirname, './models');
 const trainedModelFile = `model.json`;
@@ -40,23 +43,31 @@ io.on('connection', function (socket) { //ejecuta al declarar io();
 
     socket.on('stream', function (imagen) { //esta escuchando si algien emita un estream
         i++;
-        //console.log(imagen);
-        let imgApp=fr.CvImage(decodeFromBase64(imagen));
-        let faceRects = detector.locateFaces(imgApp).map(res => res.rect);
-        let faces = detector.getFacesFromLocations(imgApp, faceRects, 150);
+        var cvImage = loadBase64(fr, imagen);
+    
+        let imageRgb = fr.cvImageToImageRGB(cvImage);
         
-        win.setImage(imgApp);
+        let imageRgbSmall = imageRgb;
+
+
+        if (imageRgb.cols > 150 || imageRgb.rows > 120) {
+            imageRgbSmall = fr.resizeImage(imageRgb, 0.5);
+        }
+        console.log("col->" + imageRgbSmall.cols + " rows ->" + imageRgbSmall.rows + " total->" + imageRgbSmall.cols * imageRgbSmall.rows);
+        win.setImage(imageRgbSmall);
+        let faceRects = detector.locateFaces(imageRgbSmall).map(res => res.rect);
+        console.log(i);
+        let faces = detector.getFacesFromLocations(imageRgbSmall, faceRects, 150);
+
         drawRects(win, faceRects);
-        let unknownThreshold = 0.6
+        let unknownThreshold = 0.6;
         faceRects.forEach((rect, i) => {
             const prediction = recognizer.predictBest(faces[i], unknownThreshold);
             //win.addOverlay(rect, `${prediction.className} (${prediction.distance})`);
             win.addOverlay(rect, `${prediction.className} \n (${prediction.distance})`);
-            
-            console.log(rect);
-            console.log(prediction);
+            // console.log(rect);
+            // console.log(prediction);
         });
-        //fs.writeFileSync('img'+i+".jpg", imagen);
         socket.broadcast.emit('sendImagen', imagen); //envia a todos ese stream
     });
 });
@@ -64,3 +75,4 @@ io.on('connection', function (socket) { //ejecuta al declarar io();
 server.listen(port, () => {
     log.info('servidor escuchando en puerto %s', port);
 });
+

@@ -26,3 +26,16 @@ exports.decodeFromBase64 = (base64DataString) => {
 exports.encodeJpgBase64 = (img) => {
   return cv.imencode('.jpg', img).toString('base64');
 }
+
+exports.loadBase64=(fr,base64encoded)=>{
+  const base64data = base64encoded.replace('data:image/jpeg;base64','')
+  .replace('data:image/png;base64','').replace('data:image/webp;base64','');
+  const buffer = Buffer.from(base64data, 'base64');
+  const image = cv.imdecode(buffer);
+  const cvImage = fr.CvImage(image)
+  return cvImage;
+  }
+
+exports.base64_encode=(file)=> {
+      return fs.readFileSync(file, 'base64');
+  }

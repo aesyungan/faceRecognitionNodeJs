@@ -37,9 +37,12 @@
             video.src = URL.createObjectURL(stream);
         }
         //muestra en canvas
+        var i=0;
         function viewVideo(video, content) {
             context.drawImage(video, 0, 0, canvas.width,canvas.height)
             socket.emit('stream',canvas.toDataURL('image/webp'));
+            i++;
+            console.log("send img >"+i);
         }
         $(function () {
             
@@ -53,7 +56,7 @@
             //1000 =1seg
             setInterval(function () {
                 viewVideo(video, context);
-            },5000);//70fps
+            },200);//70fps
 
         });
     </script>

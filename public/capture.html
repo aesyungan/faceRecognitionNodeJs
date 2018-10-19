@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Emitir</title>
+    <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+        crossorigin="anonymous"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+        crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+</head>
+
+<body>
+    <video style="width: 680px;height: 320px;" src="" id="video" autoplay="true"></video>
+    <canvas style="display: none;" id="preview"></canvas>
+    <div id="logger"></div>
+    <hr>
+    <input id="nombre" placeholder="Nombre" />
+    <button id="btn-capture">Capturar</button>
+    <script>
+        var canvas = document.getElementById("preview");
+        var context = canvas.getContext("2d");
+        canvas.width = 800;
+        canvas.height = 600;
+        context.width = canvas.width;
+        context.height = canvas.height;
+        var video = document.getElementById("video");
+        var socket = io();
+
+        function logger(msg) {
+            $("#logger").text(msg);
+        }
+
+        function loadFail() {
+            logger("Camara no conectado ");
+        }
+
+        function loadCam(stream) {
+            logger("Camara cargada correctamente");
+            video.src = URL.createObjectURL(stream);
+        }
+
+        //muestra en canvas
+        var i = 0;
+
+        $(function () {
+
+            navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia ||
+                navigator.mozGetUserMedia || navigator.msGetUserMedia);
+            if (navigator.getUserMedia) { //si tenemos acceso a la camara
+                navigator.getUserMedia({
+                    video: true
+                }, loadCam, loadFail);
+            }
+            // //1000 =1seg
+            // setInterval(function () {
+            //     viewVideo(video, context);
+            // },400);//70fps
+            $("#btn-capture").click(function () {
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                let nombre = $('#nombre').val();
+                let data = { "nombre": nombre, "img": canvas.toDataURL('image/webp') };
+                //console.log(data);
+                socket.emit('capture', data);
+            });
+
+        });
+        $(document).ready(function () {
+            var socket2 = io();
+            socket2.on('smscapture', (data) => {
+              //  console.log("correcto");
+                swal(data.correct ? "Correcto" : "Error", data.sms, data.correct ? "success" : "error");
+
+            });
+
+        });
+
+    </script>
+
+</body>
+
+</html>
