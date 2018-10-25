@@ -1,8 +1,7 @@
-var express = require('express');
+var express = require("express");
 var app = express();
-var https = require('https');
-var app = express();
-
+var server = require('http').createServer(app);
+var io = require('socket.io').listen(server); //inicia socket
 var port = process.env.PORT || 3000;
 var Log = require("log"),
     log = new Log('debug');
@@ -34,60 +33,49 @@ const minPxSize = 307200;//vga
 /*END config face  */
 app.use(express.static(__dirname + "/public"));
 app.get('/', (req, res) => {
-    
     res.redirect('index.html');
     //res.send("app");
 });
 //socket on escucha --- emit envia
 var i = 0;
-//escuchar en puerto
-const options = {
-    pfx: fs.readFileSync('mycert.p12'),
-    passphrase: '12345678',
-    requestCert: false,
-    rejectUnauthorized: false
-};
-var server = https.createServer(options, app);
-var io = require('socket.io').listen(server); //inicia socket
 io.on('connection', function (socket) { //ejecuta al declarar io();
     console.log("se conecto un usuario");
 
     socket.on('stream', function (imagen) { //esta escuchando si algien emita un estream
-        console.time('loop');
         i++;
         //console.log(imagen);
-        const base64text = imagen;//Base64 encoded string
+        Promise.all([convertirImagen(imagen)]).then(imgData => {
 
-        const base64data = base64text.replace('data:image/webp;base64', '')
-            .replace('data:image/png;base64', '');//Strip image type prefix
-        const buffer = Buffer.from(base64data, 'base64');
-        const img = cv.imdecode(buffer); //Image is now represented as Mat
+            const img = cv.imdecode(imgData[0]); //Image is now represented as Mat
 
-        //console.log('detecting faces for query image');
-        const detections = detectFaces(img, 150);
+            console.log('detecting faces for query image');
+            const detections = detectFaces(img, 150);
 
-        const drawImg = img.copy()
-        // mark faces with distance > 0.6 as unknown
-        const unknownThreshold = 0.6;
-        detections.forEach((det) => {
-            const { rect, face } = det;
-            const cvFace = fr.CvImage(face);
-            const prediction = recognizer.predictBest(cvFace, unknownThreshold);
+            const drawImg = img.copy()
+            // mark faces with distance > 0.6 as unknown
+            const unknownThreshold = 0.6;
+            detections.forEach((det) => {
+                const { rect, face } = det;
+                const cvFace = fr.CvImage(face);
+                const prediction = recognizer.predictBest(cvFace, unknownThreshold);
 
-            const text = `${prediction.className} (${prediction.distance})`;
-            const blue = new cv.Vec(100, 100, 154);
-            drawRectWithText(drawImg, rect, text, blue);
+                const text = `${prediction.className} (${prediction.distance})`;
+                const blue = new cv.Vec(100, 100, 154);
+                drawRectWithText(drawImg, rect, text, blue);
 
-            // console.log(prediction);
-            //cv.imshow(`image_${i})`, drawImg);
-            //  cv.waitKey(1)
+                // console.log(prediction);
+                //cv.imshow(`image_${i})`, drawImg);
+                //  cv.waitKey(1)
 
+            });
+            // convert Mat to base64 encoded jpg image
+            const outBase64 = cv.imencode('.jpg', drawImg).toString('base64'); // Perform base64 encoding
+            socket.broadcast.emit('sendImagen', "data:image/webp;base64," + outBase64); //envia a todos ese stream
+            return "complete..";
+        }).then(sms => {
+            console.log(sms);
         });
-        // convert Mat to base64 encoded jpg image
-        const outBase64 = cv.imencode('.jpg', drawImg).toString('base64'); // Perform base64 encoding
-        socket.broadcast.emit('sendImagen', "data:image/webp;base64," + outBase64); //envia a todos ese stream
         console.log(i);
-        console.timeEnd('loop');
     });
     //capture img 
     socket.on('capture', function (data) {
@@ -119,7 +107,7 @@ io.on('connection', function (socket) { //ejecuta al declarar io();
 
     });
 });
-
+//escuchar en puerto
 server.listen(port, () => {
     log.info('servidor escuchando en puerto %s', port);
 });
@@ -128,12 +116,9 @@ server.listen(port, () => {
 /*otras funciones */
 // opencv way to detect faces, faster but not as precise
 const classifier = new cv.CascadeClassifier(cv.HAAR_FRONTALFACE_ALT2);
-//const classifier = new cv.CascadeClassifier(cv.HAAR_FRONTALFACE_DEFAULT);
-
 const minDetections = 5;
 
 detectFaces = (img, faceSize) => {
-    // const { objects, numDetections } = classifier.detectMultiScale(img.bgrToGray());
     const { objects, numDetections } = classifier.detectMultiScale(img.bgrToGray(), { scaleFactor: 1.2, minSize: new cv.Size(100, 100) })
     return objects
         .filter((_, i) => minDetections <= numDetections[i])
@@ -163,4 +148,13 @@ drawRectWithText = (image, rect, text, color) => {
         color,
         thickness
     )
+}
+
+convertirImagen = async (imagenBase64) => {
+    const base64text = imagenBase64;//Base64 encoded string
+
+    const base64data = base64text.replace('data:image/webp;base64', '')
+        .replace('data:image/png;base64', '');//Strip image type prefix
+    const buffer = Buffer.from(base64data, 'base64');
+    return buffer;
 }

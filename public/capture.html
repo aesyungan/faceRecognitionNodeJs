@@ -53,13 +53,14 @@
 
         $(function () {
 
-            navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia ||
+             navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia ||
                 navigator.mozGetUserMedia || navigator.msGetUserMedia);
             if (navigator.getUserMedia) { //si tenemos acceso a la camara
                 navigator.getUserMedia({
                     video: true
                 }, loadCam, loadFail);
             }
+            
             // //1000 =1seg
             // setInterval(function () {
             //     viewVideo(video, context);

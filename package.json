@@ -13,9 +13,14 @@
     "face-recognition": "^0.9.3",
     "fs": "0.0.1-security",
     "http": "0.0.0",
+    "https": "^1.0.0",
     "log": "^1.4.0",
+    "napajs": "^0.2.3",
     "opencv4nodejs": "^4.9.0",
     "path": "^0.12.7",
-    "socket.io": "^2.1.1"
+    "run-parallel": "^1.1.9",
+    "socket.io": "^2.1.1",
+    "tape": "^4.9.1",
+    "threads": "^0.12.0"
   }
 }
