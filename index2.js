@@ -1,8 +1,6 @@
 var express = require('express');
 var app = express();
 var https = require('https');
-var app = express();
-
 var port = process.env.PORT || 3000;
 var Log = require("log"),
     log = new Log('debug');
@@ -49,10 +47,10 @@ const options = {
 };
 var server = https.createServer(options, app);
 var io = require('socket.io').listen(server); //inicia socket
-io.on('connection', function (socket) { //ejecuta al declarar io();
+io.on('connection', async (socket)=> { //ejecuta al declarar io();
     console.log("se conecto un usuario");
 
-    socket.on('stream', function (imagen) { //esta escuchando si algien emita un estream
+    socket.on('stream', async (imagen)=> { //esta escuchando si algien emita un estream
         console.time('loop');
         i++;
         //console.log(imagen);

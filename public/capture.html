@@ -45,7 +45,9 @@
 
         function loadCam(stream) {
             logger("Camara cargada correctamente");
-            video.src = URL.createObjectURL(stream);
+            //   video.src = window.HTMLMediaElement.srcObject(stream);
+            video.srcObject = stream;
+            //video.src = URL.createObjectURL(stream);
         }
 
         //muestra en canvas
@@ -53,14 +55,14 @@
 
         $(function () {
 
-             navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia ||
+            navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia ||
                 navigator.mozGetUserMedia || navigator.msGetUserMedia);
             if (navigator.getUserMedia) { //si tenemos acceso a la camara
                 navigator.getUserMedia({
                     video: true
                 }, loadCam, loadFail);
             }
-            
+
             // //1000 =1seg
             // setInterval(function () {
             //     viewVideo(video, context);
@@ -77,7 +79,7 @@
         $(document).ready(function () {
             var socket2 = io();
             socket2.on('smscapture', (data) => {
-              //  console.log("correcto");
+                //  console.log("correcto");
                 swal(data.correct ? "Correcto" : "Error", data.sms, data.correct ? "success" : "error");
 
             });
