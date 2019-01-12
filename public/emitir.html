@@ -34,7 +34,8 @@
 
         function loadCam(stream) {
             logger("Camara cargada correctamente");
-            video.src = URL.createObjectURL(stream);
+            video.srcObject = stream;
+            //video.src = URL.createObjectURL(stream);
         }
         //muestra en canvas
         var i=0;
