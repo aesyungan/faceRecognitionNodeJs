@@ -1,5 +1,8 @@
 # faceRecognitionNodeJs
-instalacion en centOS 7.5 
+### requerimientos
+- Nodejs 10
+- Git
+- instalacion de librerias en centOS 7.5 
 ```
 yum install libX11-devel
 ```
@@ -53,4 +56,9 @@ https://www.vultr.com/docs/how-to-install-ffmpeg-on-centos
 ```
 ```
   # yum install openblas-devel
+```
+### instalar librerias 
+todas las dependencias del sistema se debe instalar correctamente
+```
+npm install
 ```
